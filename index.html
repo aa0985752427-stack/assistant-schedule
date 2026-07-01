@@ -227,6 +227,8 @@ button:active { transform: scale(0.96); }
 .week-card.month-total h4 { color: var(--pink-700); }
 .month-meta { margin: -8px 0 14px; font-size: 12px; font-weight: 600; color: var(--text-soft); display: flex; align-items: center; flex-wrap: wrap; }
 .leave-input { width: 48px; margin: 0 2px; border: 1px solid var(--pink-300); border-radius: 6px; padding: 2px 4px; font-size: 12px; font-family: inherit; text-align: center; color: var(--pink-700); font-weight: 700; }
+.special-row { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: var(--text-soft); }
+.special-input { width: 40px; margin: 0 2px; border: 1px solid var(--line); border-radius: 6px; padding: 1px 3px; font-size: 11px; font-family: inherit; text-align: center; color: var(--pink-700); font-weight: 700; }
 .grand-total { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); text-align: right; font-weight: 800; font-size: 14px; color: var(--pink-700); }
 .hours-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
 .hours-item { display: flex; flex-direction: column; gap: 6px; }
@@ -383,6 +385,12 @@ function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(meta))
 function monthKey() { return viewYear + '-' + pad(viewMonth + 1); }
 function getLeave() { const m = meta[monthKey()]; return (m && m.leave) || 0; }
 function setLeave(n) { if (!meta[monthKey()]) meta[monthKey()] = {}; meta[monthKey()].leave = n; saveMeta(); }
+function getSpecial(name) { const m = meta[monthKey()]; return (m && m.special && m.special[name]) || 0; }
+function setSpecial(name, n) {
+  if (!meta[monthKey()]) meta[monthKey()] = {};
+  if (!meta[monthKey()].special) meta[monthKey()].special = {};
+  meta[monthKey()].special[name] = n; saveMeta();
+}
 function getCell(key) {
   if (!schedule[key]) schedule[key] = {};
   const c = schedule[key];
@@ -531,25 +539,24 @@ function renderWeeklySummary() {
   for (let d = 1; d <= total; d++) { if (new Date(viewYear, viewMonth, d).getDay() !== 0) workDays++; }
   const WORK_DAYS_PER_WEEK = 6;
   const leave = getLeave();
-  const dueDays = Math.max(0, workDays - leave);
-  const expectHours = Math.round(dueDays * WEEKLY_TARGET / WORK_DAYS_PER_WEEK * 10) / 10;
+  const dueDays = Math.max(0, workDays - leave); // 全體應上天數（未扣個人特休）
 
   // 本月總時數卡片
   const monthCard = document.createElement('div'); monthCard.className = 'week-card month-total';
   const mh = document.createElement('h4'); mh.textContent = '本月總時數（' + (viewMonth + 1) + ' 月）';
   monthCard.appendChild(mh);
   const metaEl = document.createElement('div'); metaEl.className = 'month-meta';
-  metaEl.append('工作天 ' + workDays + ' 天　休假 ');
+  metaEl.append('工作天 ' + workDays + ' 天　月休（全體） ');
   const leaveInput = document.createElement('input');
   leaveInput.type = 'number'; leaveInput.min = '0'; leaveInput.max = String(workDays); leaveInput.step = '1';
   leaveInput.className = 'leave-input'; leaveInput.value = leave;
-  leaveInput.title = '本月休假天數，會從應上天數扣除';
+  leaveInput.title = '本月月休天數（全體相同），會從應上天數扣除';
   leaveInput.addEventListener('change', function () {
     let v = parseInt(leaveInput.value, 10); if (isNaN(v) || v < 0) v = 0; if (v > workDays) v = workDays;
     setLeave(v); render();
   });
   metaEl.append(leaveInput);
-  metaEl.append(' 天　→ 應上天數 ' + dueDays + ' 天　正職應上時數 ' + expectHours + ' 小時（40h/週÷6天）');
+  metaEl.append(' 天　→ 全體應上天數 ' + dueDays + ' 天（每人再扣個人特休；40h/週÷6天）');
   monthCard.appendChild(metaEl);
   const mGrid = document.createElement('div'); mGrid.className = 'hours-grid';
   let grand = 0;
@@ -562,13 +569,31 @@ function renderWeeklySummary() {
     const val = document.createElement('span');
     if (a.partTime) {
       val.className = 'hours-value pt'; val.textContent = hrs + ' 小時';
+      top.append(avatar, label, val); item.appendChild(top);
     } else {
-      const diff = Math.round((hrs - expectHours) * 10) / 10;
+      const special = getSpecial(a.name);
+      const personDue = Math.max(0, dueDays - special);
+      const personExpect = Math.round(personDue * WEEKLY_TARGET / WORK_DAYS_PER_WEEK * 10) / 10;
+      const diff = Math.round((hrs - personExpect) * 10) / 10;
       const state = diff === 0 ? 'ok' : diff > 0 ? 'over' : 'under';
       val.className = 'hours-value ' + state;
-      val.textContent = '實 ' + hrs + ' / 應 ' + expectHours + ' 小時' + (diff === 0 ? '' : '（' + (diff > 0 ? '+' : '') + diff + '）');
+      val.textContent = '實 ' + hrs + ' / 應 ' + personExpect + ' 小時' + (diff === 0 ? '' : '（' + (diff > 0 ? '+' : '') + diff + '）');
+      top.append(avatar, label, val); item.appendChild(top);
+
+      const sp = document.createElement('div'); sp.className = 'special-row';
+      sp.append('特休 ');
+      const spInput = document.createElement('input');
+      spInput.type = 'number'; spInput.min = '0'; spInput.max = String(dueDays); spInput.step = '1';
+      spInput.className = 'special-input'; spInput.value = special;
+      spInput.title = a.name + ' 本月特休天數';
+      spInput.addEventListener('change', function () {
+        let v = parseInt(spInput.value, 10); if (isNaN(v) || v < 0) v = 0; if (v > dueDays) v = dueDays;
+        setSpecial(a.name, v); render();
+      });
+      sp.append(spInput); sp.append(' 天　應上 ' + personDue + ' 天');
+      item.appendChild(sp);
     }
-    top.append(avatar, label, val); item.appendChild(top); mGrid.appendChild(item);
+    mGrid.appendChild(item);
   });
   monthCard.appendChild(mGrid);
   const grandLine = document.createElement('div'); grandLine.className = 'grand-total';
