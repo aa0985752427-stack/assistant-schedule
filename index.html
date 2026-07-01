@@ -356,6 +356,7 @@ const SHIFTS = [
   { key: 'evening', label: '晚班', time: '16:30–20:30', hours: 4 },
 ];
 const WEEKLY_TARGET = 40;   // 一般助理每週目標工時（琳為工讀，時數彈性不設目標）
+const DEFAULT_LEAVE = 9;    // 每月月休預設天數（全體相同，可於卡片上調整）
 
 // 醫師固定班表（0=週日 ... 6=週六）
 const DOCTORS = {
@@ -383,7 +384,7 @@ function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedul
 function loadMeta() { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } }
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch (e) {} }
 function monthKey() { return viewYear + '-' + pad(viewMonth + 1); }
-function getLeave() { const m = meta[monthKey()]; return (m && m.leave) || 0; }
+function getLeave() { const m = meta[monthKey()]; return (m && m.leave !== undefined && m.leave !== null) ? m.leave : DEFAULT_LEAVE; }
 function setLeave(n) { if (!meta[monthKey()]) meta[monthKey()] = {}; meta[monthKey()].leave = n; saveMeta(); }
 function getSpecial(name) { const m = meta[monthKey()]; return (m && m.special && m.special[name]) || 0; }
 function setSpecial(name, n) {
