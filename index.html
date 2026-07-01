@@ -40,6 +40,7 @@
 
   /* 班別色 */
   --morning: #ff9f43;
+  --noon:    #22b8a4;
   --evening: #5b8def;
 }
 
@@ -136,6 +137,7 @@ button:active { transform: scale(0.96); }
 .shift-legend li:last-child, .doctor-legend li:last-child { margin-bottom: 0; }
 .dot { width: 13px; height: 13px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 3px rgba(0,0,0,.03); }
 .dot-morning { background: var(--morning); }
+.dot-noon { background: var(--noon); }
 .dot-evening { background: var(--evening); }
 .doc-tag { color: #fff; font-size: 12px; padding: 3px 9px; border-radius: 7px; font-weight: 700; }
 .doc-chen { background: linear-gradient(120deg, #e2669a, #d07aa0); }
@@ -186,7 +188,20 @@ button:active { transform: scale(0.96); }
 
 .shift-block { border-radius: 10px; padding: 6px 7px; }
 .shift-block.morning { background: #fff5e8; border-left: 3px solid var(--morning); }
+.shift-block.noon    { background: #e6f8f4; border-left: 3px solid var(--noon); }
 .shift-block.evening { background: #eef2fd; border-left: 3px solid var(--evening); }
+
+/* 工讀時數輸入 */
+.pt-hours {
+  display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+  color: #b9791a; background: #fff6e9; border: 1px dashed #f0c98a;
+  border-radius: 8px; padding: 4px 7px;
+}
+.pt-hours input {
+  width: 46px; border: 1px solid var(--line); border-radius: 6px;
+  padding: 2px 4px; font-size: 12px; font-family: inherit; text-align: center;
+}
+.pt-tag { background: #f0a53b; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 6px; font-weight: 700; }
 .shift-title { font-size: 11px; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
 .shift-title .dot { width: 8px; height: 8px; box-shadow: none; }
 .shift-title .t-time { color: var(--text-soft); font-weight: 500; }
@@ -217,6 +232,7 @@ button:active { transform: scale(0.96); }
 .hours-value.ok    { color: #1f9d6b; }
 .hours-value.over  { color: var(--pink-700); }
 .hours-value.under { color: #d98a1a; }
+.hours-value.pt    { color: #b9791a; }
 .bar { height: 8px; border-radius: 999px; background: var(--pink-100); overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
 .bar-fill.over { background: repeating-linear-gradient(45deg, var(--pink-700), var(--pink-700) 6px, var(--pink-500) 6px, var(--pink-500) 12px); }
@@ -260,10 +276,11 @@ button:active { transform: scale(0.96); }
       <div class="info-card">
         <h3>班別時段</h3>
         <ul class="shift-legend">
-          <li><span class="dot dot-morning"></span>早班 9:30–18:30</li>
-          <li><span class="dot dot-evening"></span>晚班 11:30–20:30</li>
+          <li><span class="dot dot-morning"></span>早班 9:30–13:30</li>
+          <li><span class="dot dot-noon"></span>午班 14:30–18:30</li>
+          <li><span class="dot dot-evening"></span>晚班 16:30–20:30</li>
         </ul>
-        <p class="hint">每班以 8 小時計（已扣午休 1 小時）</p>
+        <p class="hint">每班 4 小時，可只排單一班別。琳為工讀，被排到當天可填實際時數。</p>
       </div>
       <div class="info-card">
         <h3>助理（點色塊指派班別）</h3>
@@ -308,7 +325,7 @@ button:active { transform: scale(0.96); }
 
     <!-- 每週工時統計 -->
     <section class="summary">
-      <h2>每週工時統計 <span class="target-note">目標：每人每週 40 小時</span></h2>
+      <h2>每週工時統計 <span class="target-note">一般助理每週 40 小時；琳（工讀）時數彈性</span></h2>
       <div id="weeklySummary" class="weekly-summary"></div>
     </section>
 
@@ -325,26 +342,26 @@ const ASSISTANTS = [
   { name: '霞', hex: '#ef7d78' },
   { name: '嵐', hex: '#34b3a0' },
   { name: '偲', hex: '#b06fd6' },
-  { name: '琳', hex: '#f0a53b' },
+  { name: '琳', hex: '#f0a53b', partTime: true }, // 工讀，時數彈性
   { name: '阡', hex: '#5b8def' },
 ];
 const SHIFTS = [
-  { key: 'morning', label: '早班', time: '9:30–18:30' },
-  { key: 'evening', label: '晚班', time: '11:30–20:30' },
+  { key: 'morning', label: '早班', time: '9:30–13:30', hours: 4 },
+  { key: 'noon',    label: '午班', time: '14:30–18:30', hours: 4 },
+  { key: 'evening', label: '晚班', time: '16:30–20:30', hours: 4 },
 ];
-const SHIFT_HOURS = 8;      // 每班工時（9小時工時 − 1小時午休）
-const WEEKLY_TARGET = 40;   // 每人每週目標工時
+const WEEKLY_TARGET = 40;   // 一般助理每週目標工時（琳為工讀，時數彈性不設目標）
 
 // 醫師固定班表（0=週日 ... 6=週六）
 const DOCTORS = {
   chen: { label: '陳醫師', className: 'doc-chen',
-    days: { 1: ['morning'], 3: ['morning', 'evening'], 5: ['morning', 'evening'] } },
+    days: { 1: ['morning'], 3: ['morning', 'noon', 'evening'], 5: ['morning', 'noon', 'evening'] } },
   yu:   { label: '宇醫師', className: 'doc-yu',
-    days: { 1: ['evening'], 4: ['morning', 'evening'] } }, // 週一 14:00-20:30 歸晚班時段
+    days: { 1: ['noon', 'evening'], 4: ['morning', 'noon', 'evening'] } }, // 週一 14:00-20:30
   lu:   { label: '陸醫師', className: 'doc-lu',
     days: { 3: ['evening'] } }, // 週三 16:00-20:30
   luo:  { label: '羅醫師', className: 'doc-luo',
-    days: { 2: ['morning', 'evening'], 6: ['morning'] } }, // 週二整天、週六 9:30-13:30
+    days: { 2: ['morning', 'noon', 'evening'], 6: ['morning'] } }, // 週二整天、週六 9:30-13:30
 };
 const STORAGE_KEY = 'assistant-schedule-v1';
 
@@ -356,7 +373,13 @@ function dateKey(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
 function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; } }
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule)); } catch (e) {} }
-function getCell(key) { if (!schedule[key]) schedule[key] = { morning: [], evening: [] }; return schedule[key]; }
+function getCell(key) {
+  if (!schedule[key]) schedule[key] = {};
+  const c = schedule[key];
+  SHIFTS.forEach(function (s) { if (!c[s.key]) c[s.key] = []; });
+  if (!c.custom) c.custom = {};
+  return c;
+}
 
 function toggleAssign(key, shiftKey, name) {
   const arr = getCell(key)[shiftKey];
@@ -372,7 +395,8 @@ function renderLegend() {
     const chip = document.createElement('span'); chip.className = 'legend-chip';
     const avatar = document.createElement('span'); avatar.className = 'legend-avatar';
     avatar.style.background = a.hex; avatar.textContent = a.name;
-    const label = document.createElement('span'); label.textContent = a.name;
+    const label = document.createElement('span');
+    label.innerHTML = a.name + (a.partTime ? ' <span class="pt-tag">工讀</span>' : '');
     chip.append(avatar, label); box.appendChild(chip);
   });
 }
@@ -430,6 +454,32 @@ function render() {
       });
       block.appendChild(row); cell.appendChild(block);
     });
+
+    // 工讀（琳）：被指派當天可填實際時數，覆蓋以班別計算的時數
+    ASSISTANTS.forEach(function (a) {
+      if (!a.partTime) return;
+      const assigned = SHIFTS.some(function (s) { return (data[s.key] || []).includes(a.name); });
+      const custObj = data.custom || {};
+      const hasCustom = custObj[a.name] !== undefined && custObj[a.name] !== null && custObj[a.name] !== '';
+      if (!assigned && !hasCustom) return;
+      const autoSum = SHIFTS.reduce(function (sum, s) { return sum + ((data[s.key] || []).includes(a.name) ? s.hours : 0); }, 0);
+      const wrap = document.createElement('div'); wrap.className = 'pt-hours';
+      const lbl = document.createElement('span'); lbl.textContent = a.name + ' 時數';
+      const input = document.createElement('input');
+      input.type = 'number'; input.min = '0'; input.max = '12'; input.step = '0.5';
+      input.placeholder = autoSum; input.value = hasCustom ? custObj[a.name] : '';
+      input.title = '留空＝依班別自動計 ' + autoSum + ' 小時；可填實際工讀時數';
+      input.addEventListener('change', function () {
+        const c = getCell(key);
+        const v = input.value.trim();
+        if (v === '') delete c.custom[a.name]; else c.custom[a.name] = Number(v);
+        save(); render();
+      });
+      const unit = document.createElement('span'); unit.textContent = '小時';
+      wrap.append(lbl, input, unit);
+      cell.appendChild(wrap);
+    });
+
     cal.appendChild(cell);
   }
   renderWeeklySummary();
@@ -450,8 +500,15 @@ function renderWeeklySummary() {
     const bucket = weeks.get(wkKey);
     const cell = schedule[dateKey(viewYear, viewMonth, d)];
     if (!cell) continue;
-    SHIFTS.forEach(function (shift) {
-      (cell[shift.key] || []).forEach(function (name) { bucket[name] = (bucket[name] || 0) + SHIFT_HOURS; });
+    ASSISTANTS.forEach(function (a) {
+      let h = 0;
+      const cust = cell.custom ? cell.custom[a.name] : undefined;
+      if (cust !== undefined && cust !== null && cust !== '') {
+        h = Number(cust) || 0;
+      } else {
+        SHIFTS.forEach(function (shift) { if ((cell[shift.key] || []).includes(a.name)) h += shift.hours; });
+      }
+      if (h) bucket[a.name] = (bucket[a.name] || 0) + h;
     });
   }
 
@@ -466,18 +523,28 @@ function renderWeeklySummary() {
     const grid = document.createElement('div'); grid.className = 'hours-grid';
     ASSISTANTS.forEach(function (a) {
       const hrs = bucket[a.name] || 0;
-      const state = hrs === WEEKLY_TARGET ? 'ok' : hrs > WEEKLY_TARGET ? 'over' : 'under';
       const item = document.createElement('div'); item.className = 'hours-item';
       const top = document.createElement('div'); top.className = 'hours-top';
       const avatar = document.createElement('span'); avatar.className = 'hours-avatar'; avatar.style.background = a.hex; avatar.textContent = a.name;
-      const label = document.createElement('span'); label.textContent = a.name;
-      const val = document.createElement('span'); val.className = 'hours-value ' + state;
-      val.textContent = hrs + ' / ' + WEEKLY_TARGET + ' 小時';
-      top.append(avatar, label, val);
+      const label = document.createElement('span'); label.textContent = a.name + (a.partTime ? '（工讀）' : '');
+      const val = document.createElement('span');
       const bar = document.createElement('div'); bar.className = 'bar';
-      const fill = document.createElement('div'); fill.className = 'bar-fill' + (state === 'over' ? ' over' : '');
-      fill.style.width = Math.min(100, (hrs / WEEKLY_TARGET) * 100) + '%';
-      if (state !== 'over') fill.style.background = a.hex;
+      const fill = document.createElement('div');
+      if (a.partTime) {
+        val.className = 'hours-value pt';
+        val.textContent = hrs + ' 小時';
+        fill.className = 'bar-fill';
+        fill.style.width = Math.min(100, (hrs / WEEKLY_TARGET) * 100) + '%';
+        fill.style.background = a.hex;
+      } else {
+        const state = hrs === WEEKLY_TARGET ? 'ok' : hrs > WEEKLY_TARGET ? 'over' : 'under';
+        val.className = 'hours-value ' + state;
+        val.textContent = hrs + ' / ' + WEEKLY_TARGET + ' 小時';
+        fill.className = 'bar-fill' + (state === 'over' ? ' over' : '');
+        fill.style.width = Math.min(100, (hrs / WEEKLY_TARGET) * 100) + '%';
+        if (state !== 'over') fill.style.background = a.hex;
+      }
+      top.append(avatar, label, val);
       bar.appendChild(fill);
       item.append(top, bar); grid.appendChild(item);
     });
@@ -516,11 +583,15 @@ function buildText() {
   let lines = [viewYear + ' 年 ' + (viewMonth + 1) + ' 月 助理班表', ''];
   for (let d = 1; d <= total; d++) {
     const cell = schedule[dateKey(viewYear, viewMonth, d)];
-    if (!cell || (cell.morning.length === 0 && cell.evening.length === 0)) continue;
-    const wd = weekdayNames[new Date(viewYear, viewMonth, d).getDay()];
+    if (!cell) continue;
     const parts = [];
-    if (cell.morning.length) parts.push('早班：' + cell.morning.join('、'));
-    if (cell.evening.length) parts.push('晚班：' + cell.evening.join('、'));
+    SHIFTS.forEach(function (s) { if ((cell[s.key] || []).length) parts.push(s.label + '：' + cell[s.key].join('、')); });
+    if (parts.length === 0) continue;
+    ASSISTANTS.forEach(function (a) {
+      if (a.partTime && cell.custom && cell.custom[a.name] !== undefined && cell.custom[a.name] !== null && cell.custom[a.name] !== '')
+        parts.push('（' + a.name + ' ' + cell.custom[a.name] + ' 小時）');
+    });
+    const wd = weekdayNames[new Date(viewYear, viewMonth, d).getDay()];
     lines.push((viewMonth + 1) + '/' + d + '（' + wd + '） ' + parts.join('　'));
   }
   if (lines.length === 2) lines.push('（本月尚未排班）');
