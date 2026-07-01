@@ -357,6 +357,7 @@ const SHIFTS = [
 ];
 const WEEKLY_TARGET = 40;   // 一般助理每週目標工時（琳為工讀，時數彈性不設目標）
 const DEFAULT_LEAVE = 9;    // 每月月休預設天數（全體相同，可於卡片上調整）
+const DAILY_HOURS = 8;      // 應上時數＝應上天數 × 每日 8 小時
 
 // 醫師固定班表（0=週日 ... 6=週六）
 const DOCTORS = {
@@ -535,29 +536,27 @@ function renderWeeklySummary() {
     });
   }
 
-  // 本月工作天（週一~週六）、休假、應上天數與應上時數
-  let workDays = 0;
-  for (let d = 1; d <= total; d++) { if (new Date(viewYear, viewMonth, d).getDay() !== 0) workDays++; }
-  const WORK_DAYS_PER_WEEK = 6;
+  // 應上天數 = 當月天數 − 月休（全體），每人再扣個人特休
+  const monthDays = total;
   const leave = getLeave();
-  const dueDays = Math.max(0, workDays - leave); // 全體應上天數（未扣個人特休）
+  const dueDays = Math.max(0, monthDays - leave); // 全體應上天數（未扣個人特休）
 
   // 本月總時數卡片
   const monthCard = document.createElement('div'); monthCard.className = 'week-card month-total';
   const mh = document.createElement('h4'); mh.textContent = '本月總時數（' + (viewMonth + 1) + ' 月）';
   monthCard.appendChild(mh);
   const metaEl = document.createElement('div'); metaEl.className = 'month-meta';
-  metaEl.append('工作天 ' + workDays + ' 天　月休（全體） ');
+  metaEl.append('全月 ' + monthDays + ' 天　月休（全體） ');
   const leaveInput = document.createElement('input');
-  leaveInput.type = 'number'; leaveInput.min = '0'; leaveInput.max = String(workDays); leaveInput.step = '1';
+  leaveInput.type = 'number'; leaveInput.min = '0'; leaveInput.max = String(monthDays); leaveInput.step = '1';
   leaveInput.className = 'leave-input'; leaveInput.value = leave;
   leaveInput.title = '本月月休天數（全體相同），會從應上天數扣除';
   leaveInput.addEventListener('change', function () {
-    let v = parseInt(leaveInput.value, 10); if (isNaN(v) || v < 0) v = 0; if (v > workDays) v = workDays;
+    let v = parseInt(leaveInput.value, 10); if (isNaN(v) || v < 0) v = 0; if (v > monthDays) v = monthDays;
     setLeave(v); render();
   });
   metaEl.append(leaveInput);
-  metaEl.append(' 天　→ 全體應上天數 ' + dueDays + ' 天（每人再扣個人特休；40h/週÷6天）');
+  metaEl.append(' 天　→ 全體應上天數 ' + dueDays + ' 天（每人再扣個人特休；每日 ' + DAILY_HOURS + ' 小時）');
   monthCard.appendChild(metaEl);
   const mGrid = document.createElement('div'); mGrid.className = 'hours-grid';
   let grand = 0;
@@ -574,7 +573,7 @@ function renderWeeklySummary() {
     } else {
       const special = getSpecial(a.name);
       const personDue = Math.max(0, dueDays - special);
-      const personExpect = Math.round(personDue * WEEKLY_TARGET / WORK_DAYS_PER_WEEK * 10) / 10;
+      const personExpect = Math.round(personDue * DAILY_HOURS * 10) / 10;
       const diff = Math.round((hrs - personExpect) * 10) / 10;
       const state = diff === 0 ? 'ok' : diff > 0 ? 'over' : 'under';
       val.className = 'hours-value ' + state;
