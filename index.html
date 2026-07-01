@@ -604,10 +604,15 @@ function renderWeeklySummary() {
   Array.from(weeks.keys()).sort().forEach(function (wkKey, i) {
     const monday = new Date(wkKey);
     const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    // 顯示範圍裁切在當月內（不跨到上/下個月）
+    const monStart = new Date(viewYear, viewMonth, 1);
+    const monEnd = new Date(viewYear, viewMonth, daysInMonth(viewYear, viewMonth));
+    const dispStart = monday < monStart ? monStart : monday;
+    const dispEnd = sunday > monEnd ? monEnd : sunday;
     const bucket = weeks.get(wkKey);
     const card = document.createElement('div'); card.className = 'week-card';
     const title = document.createElement('h4');
-    title.textContent = '第 ' + (i + 1) + ' 週（' + (monday.getMonth() + 1) + '/' + monday.getDate() + ' – ' + (sunday.getMonth() + 1) + '/' + sunday.getDate() + '）';
+    title.textContent = '第 ' + (i + 1) + ' 週（' + (dispStart.getMonth() + 1) + '/' + dispStart.getDate() + ' – ' + (dispEnd.getMonth() + 1) + '/' + dispEnd.getDate() + '）';
     card.appendChild(title);
     const grid = document.createElement('div'); grid.className = 'hours-grid';
     ASSISTANTS.forEach(function (a) {
