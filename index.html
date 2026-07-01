@@ -363,8 +363,8 @@ const DAILY_HOURS = 8;      // 應上時數＝應上天數 × 每日 8 小時
 
 // 特別班：指定日期改用自訂班別（取代當天的早/午/晚三班）
 const SPECIAL_SHIFTS = {
-  '2026-07-11': [{ key: 'full', label: '全日', time: '9:30–18:00', hours: 8.5 }],
-  '2026-07-25': [{ key: 'full', label: '全日', time: '9:30–18:00', hours: 8.5 }],
+  '2026-07-11': [{ key: 'full', label: '全日', time: '9:30–18:00', hours: 8 }],
+  '2026-07-25': [{ key: 'full', label: '全日', time: '9:30–18:00', hours: 8 }],
 };
 function shiftsForDate(key) { return SPECIAL_SHIFTS[key] || SHIFTS; }
 
