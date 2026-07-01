@@ -1,0 +1,14 @@
+# 系統檔
+.DS_Store
+Thumbs.db
+
+# 編輯器
+.vscode/
+.idea/
+
+# 相依套件（本專案為純靜態，通常用不到）
+node_modules/
+
+# 環境變數
+.env
+.env.local

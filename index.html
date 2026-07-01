@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>助理排班系統</title>
+  <meta name="description" content="診所助理每月排班工具，分早晚班、自動計算每週工時。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 頁首 -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">🌸</span>
+        <div>
+          <h1>助理排班系統</h1>
+          <p class="subtitle">每月班表 · 分早晚班 · 自動計算工時</p>
+        </div>
+      </div>
+
+      <div class="month-nav">
+        <button id="prevMonth" class="icon-btn" title="上一個月" aria-label="上一個月">‹</button>
+        <span id="monthLabel" class="month-label">2026 年 7 月</span>
+        <button id="nextMonth" class="icon-btn" title="下一個月" aria-label="下一個月">›</button>
+        <button id="todayBtn" class="ghost-btn" title="回到本月">今天</button>
+      </div>
+    </header>
+
+    <!-- 說明列 -->
+    <section class="info-strip">
+      <div class="info-card">
+        <h3>班別時段</h3>
+        <ul class="shift-legend">
+          <li><span class="dot dot-morning"></span>早班 9:30–18:30</li>
+          <li><span class="dot dot-evening"></span>晚班 11:30–20:30</li>
+        </ul>
+        <p class="hint">每班以 8 小時計（已扣午休 1 小時）</p>
+      </div>
+
+      <div class="info-card">
+        <h3>助理（點色塊指派班別）</h3>
+        <div id="assistantLegend" class="assistant-legend"></div>
+      </div>
+
+      <div class="info-card">
+        <h3>醫師固定班（參考）</h3>
+        <ul class="doctor-legend">
+          <li><span class="doc-tag doc-chen">陳醫師</span> 週一早班、週三/週五整天</li>
+          <li><span class="doc-tag doc-yu">宇醫師</span> 週一 14:00–20:30、週四整天</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 工具列 -->
+    <section class="toolbar">
+      <div class="toolbar-left">
+        <button id="autoFillBtn" class="primary-btn" title="依醫師班表帶入建議班別">套用醫師班表建議</button>
+        <button id="clearBtn" class="ghost-btn">清除本月</button>
+      </div>
+      <div class="toolbar-right">
+        <button id="exportBtn" class="ghost-btn">匯出文字</button>
+        <button id="emailBtn" class="primary-btn">📧 Email 通知</button>
+      </div>
+    </section>
+
+    <!-- 月曆 -->
+    <main>
+      <div class="weekday-head">
+        <div class="wd wd-sun">日</div>
+        <div class="wd">一</div>
+        <div class="wd">二</div>
+        <div class="wd">三</div>
+        <div class="wd">四</div>
+        <div class="wd">五</div>
+        <div class="wd wd-sat">六</div>
+      </div>
+      <div id="calendar" class="calendar"></div>
+    </main>
+
+    <!-- 每週工時統計 -->
+    <section class="summary">
+      <h2>每週工時統計 <span class="target-note">目標：每人每週 40 小時</span></h2>
+      <div id="weeklySummary" class="weekly-summary"></div>
+    </section>
+
+    <footer class="footer">
+      <p>資料僅儲存在此瀏覽器（localStorage），不會上傳。清除瀏覽器資料將遺失班表，請記得匯出備份。</p>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
