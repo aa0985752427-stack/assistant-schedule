@@ -53,8 +53,8 @@ git push -u origin main
 ## 檔案結構
 
 ```
-index.html    頁面結構
-styles.css    淡粉紅主題樣式
-app.js        排班邏輯（localStorage 儲存）
+index.html    單一自帶檔案（HTML + 淡粉紅樣式 + 排班邏輯，localStorage 儲存）
 zbpack.json   Zeabur 靜態部署設定
 ```
+
+> 為確保在各種環境（含預覽面板、直接雙擊開啟）都能正常顯示樣式，CSS 與 JS 已內嵌於 `index.html`。

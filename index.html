@@ -1,12 +1,238 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>助理排班系統</title>
-  <meta name="description" content="診所助理每月排班工具，分早晚班、自動計算每週工時。" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="./styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>助理排班系統</title>
+<meta name="description" content="診所助理每月排班工具，分早晚班、自動計算每週工時。" />
+<style>
+/* ============================================================
+   助理排班系統 · 淡粉紅主題（單檔自帶樣式）
+   ============================================================ */
+:root {
+  /* 淡粉紅色階（主色） */
+  --pink-50:  #fff6f9;
+  --pink-100: #ffe9f1;
+  --pink-200: #ffd6e4;
+  --pink-300: #ffc0d5;
+  --pink-400: #ffa7c4;
+  --pink-500: #ff8db2;
+  --pink-600: #f56a99;
+  --pink-700: #d94e80;
+
+  --text:      #5a3a47;
+  --text-soft: #a98a95;
+  --line:      #ffdfea;
+  --white:     #ffffff;
+
+  --radius:    18px;
+  --radius-sm: 12px;
+  --shadow-sm: 0 2px 10px rgba(245, 106, 153, 0.10);
+  --shadow:    0 8px 26px rgba(245, 106, 153, 0.16);
+  --shadow-lg: 0 16px 40px rgba(245, 106, 153, 0.22);
+
+  /* 助理專屬色 */
+  --a-xia:  #ef7d78;
+  --a-lan:  #34b3a0;
+  --a-si:   #b06fd6;
+  --a-lin:  #f0a53b;
+  --a-qian: #5b8def;
+
+  /* 班別色 */
+  --morning: #ff9f43;
+  --evening: #5b8def;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  color: var(--text);
+  line-height: 1.55;
+  background:
+    radial-gradient(1200px 600px at 12% -12%, #ffd0e2 0%, rgba(255,208,226,0) 55%),
+    radial-gradient(1000px 520px at 100% 0%, #ffe0ec 0%, rgba(255,224,236,0) 52%),
+    linear-gradient(180deg, #fff6f9 0%, #fffbfd 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.app { max-width: 1200px; margin: 0 auto; padding: 26px 22px 70px; }
+
+/* ===== 頁首 ===== */
+.topbar {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  align-items: center; justify-content: space-between;
+  background: linear-gradient(120deg, #ffb3cf 0%, #ffd3e2 100%);
+  border-radius: 22px;
+  padding: 22px 26px;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 22px;
+  position: relative; overflow: hidden;
+}
+.topbar::after {
+  content: ""; position: absolute; right: -40px; top: -60px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: rgba(255,255,255,0.28);
+}
+.brand { display: flex; align-items: center; gap: 14px; z-index: 1; }
+.brand-mark {
+  font-size: 30px; background: rgba(255,255,255,0.55);
+  padding: 10px 14px; border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+}
+.brand h1 { margin: 0; font-size: 24px; font-weight: 900; color: #c53c72; letter-spacing: 2px; }
+.subtitle { margin: 3px 0 0; font-size: 13px; color: #b85a80; font-weight: 600; }
+
+.month-nav {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.96);
+  padding: 6px; border-radius: 999px; box-shadow: var(--shadow-sm); z-index: 1;
+}
+.month-label { min-width: 128px; text-align: center; font-weight: 800; font-size: 16px; color: var(--pink-700); }
+
+/* ===== 按鈕 ===== */
+button { font-family: inherit; cursor: pointer; border: none; transition: transform .12s ease, box-shadow .15s ease, background .15s ease; }
+button:active { transform: scale(0.96); }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--pink-100); color: var(--pink-700);
+  font-size: 22px; line-height: 1; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.icon-btn:hover { background: var(--pink-200); }
+.ghost-btn {
+  background: var(--white); color: var(--pink-700);
+  border: 1.5px solid var(--line);
+  padding: 9px 16px; border-radius: 12px; font-size: 14px; font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+.ghost-btn:hover { background: var(--pink-50); border-color: var(--pink-300); transform: translateY(-1px); }
+.primary-btn {
+  background: linear-gradient(120deg, var(--pink-600), var(--pink-400));
+  color: #fff; padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700;
+  box-shadow: 0 6px 16px rgba(245,106,153,.38);
+}
+.primary-btn:hover { box-shadow: 0 10px 22px rgba(245,106,153,.5); transform: translateY(-1px); }
+.month-nav .ghost-btn { padding: 7px 12px; box-shadow: none; }
+
+/* ===== 說明列 ===== */
+.info-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.info-card {
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm);
+}
+.info-card h3 {
+  margin: 0 0 12px; font-size: 14px; font-weight: 800; color: var(--pink-700);
+  display: flex; align-items: center; gap: 7px;
+}
+.info-card h3::before { content: ""; width: 6px; height: 16px; border-radius: 4px; background: linear-gradient(var(--pink-500), var(--pink-300)); }
+.hint { margin: 10px 0 0; font-size: 12px; color: var(--text-soft); }
+
+.shift-legend, .doctor-legend { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.shift-legend li, .doctor-legend li { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+.shift-legend li:last-child, .doctor-legend li:last-child { margin-bottom: 0; }
+.dot { width: 13px; height: 13px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 3px rgba(0,0,0,.03); }
+.dot-morning { background: var(--morning); }
+.dot-evening { background: var(--evening); }
+.doc-tag { color: #fff; font-size: 12px; padding: 3px 9px; border-radius: 7px; font-weight: 700; }
+.doc-chen { background: linear-gradient(120deg, #e2669a, #d07aa0); }
+.doc-yu   { background: linear-gradient(120deg, #5b8def, #6a8fbf); }
+
+.assistant-legend { display: flex; flex-wrap: wrap; gap: 10px; }
+.legend-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+.legend-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 800; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,.15);
+}
+
+/* ===== 工具列 ===== */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-bottom: 16px; }
+.toolbar-left, .toolbar-right { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ===== 月曆 ===== */
+.weekday-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 10px; }
+.wd { text-align: center; font-weight: 700; font-size: 13px; color: var(--text-soft); padding: 4px 0; }
+.wd-sun { color: var(--pink-700); }
+.wd-sat { color: var(--a-qian); }
+
+.calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.day {
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  min-height: 132px; padding: 9px; box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 7px;
+  transition: transform .12s ease, box-shadow .15s ease;
+}
+.day:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.day.empty { background: transparent; border: none; box-shadow: none; }
+.day.empty:hover { transform: none; }
+.day.today { border-color: var(--pink-400); box-shadow: 0 0 0 2px var(--pink-300), var(--shadow); }
+.day.weekend { background: linear-gradient(180deg, #fff8fb, #fff); }
+
+.day-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.day-num { font-weight: 800; font-size: 16px; }
+.day.today .day-num {
+  background: var(--pink-600); color: #fff; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.day.weekend .day-num { color: var(--pink-700); }
+.doc-badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; }
+.doc-badge { font-size: 10px; color: #fff; padding: 2px 6px; border-radius: 6px; font-weight: 700; }
+
+.shift-block { border-radius: 10px; padding: 6px 7px; }
+.shift-block.morning { background: #fff5e8; border-left: 3px solid var(--morning); }
+.shift-block.evening { background: #eef2fd; border-left: 3px solid var(--evening); }
+.shift-title { font-size: 11px; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+.shift-title .dot { width: 8px; height: 8px; box-shadow: none; }
+.shift-title .t-time { color: var(--text-soft); font-weight: 500; }
+
+.chip-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip {
+  width: 28px; height: 28px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; border: 1.5px solid #f0dde4;
+  background: #fff; color: #c9b2ba; user-select: none;
+  transition: transform .1s ease, box-shadow .15s ease;
+}
+.chip:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.chip.on { color: #fff; border-color: transparent; box-shadow: 0 4px 10px rgba(0,0,0,.18); }
+
+/* ===== 每週工時 ===== */
+.summary { margin-top: 34px; }
+.summary h2 { font-size: 19px; font-weight: 900; color: var(--pink-700); display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+.target-note { font-size: 12px; color: var(--text-soft); font-weight: 500; }
+.weekly-summary { display: flex; flex-direction: column; gap: 16px; }
+.week-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow-sm); }
+.week-card h4 { margin: 0 0 14px; font-size: 15px; font-weight: 800; color: var(--text); }
+.hours-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.hours-item { display: flex; flex-direction: column; gap: 6px; }
+.hours-top { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.hours-avatar { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12px; }
+.hours-value { margin-left: auto; font-weight: 800; font-size: 13px; }
+.hours-value.ok    { color: #1f9d6b; }
+.hours-value.over  { color: var(--pink-700); }
+.hours-value.under { color: #d98a1a; }
+.bar { height: 8px; border-radius: 999px; background: var(--pink-100); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
+.bar-fill.over { background: repeating-linear-gradient(45deg, var(--pink-700), var(--pink-700) 6px, var(--pink-500) 6px, var(--pink-500) 12px); }
+
+/* ===== 頁尾 ===== */
+.footer { margin-top: 34px; text-align: center; font-size: 12px; color: var(--text-soft); }
+
+/* ===== 響應式 ===== */
+@media (max-width: 880px) { .info-strip { grid-template-columns: 1fr; } }
+@media (max-width: 720px) {
+  .calendar { grid-template-columns: 1fr; gap: 8px; }
+  .weekday-head { display: none; }
+  .day { min-height: auto; }
+  .day.empty { display: none; }
+  .day-num::after { content: attr(data-weekday); font-size: 12px; color: var(--text-soft); margin-left: 6px; font-weight: 500; }
+  .day.today .day-num { width: auto; height: auto; border-radius: 8px; padding: 2px 8px; }
+}
+</style>
 </head>
 <body>
   <div class="app">
@@ -19,7 +245,6 @@
           <p class="subtitle">每月班表 · 分早晚班 · 自動計算工時</p>
         </div>
       </div>
-
       <div class="month-nav">
         <button id="prevMonth" class="icon-btn" title="上一個月" aria-label="上一個月">‹</button>
         <span id="monthLabel" class="month-label">2026 年 7 月</span>
@@ -38,12 +263,10 @@
         </ul>
         <p class="hint">每班以 8 小時計（已扣午休 1 小時）</p>
       </div>
-
       <div class="info-card">
         <h3>助理（點色塊指派班別）</h3>
         <div id="assistantLegend" class="assistant-legend"></div>
       </div>
-
       <div class="info-card">
         <h3>醫師固定班（參考）</h3>
         <ul class="doctor-legend">
@@ -90,6 +313,248 @@
     </footer>
   </div>
 
-  <script src="./app.js"></script>
+<script>
+/* ============================================================
+   助理排班系統 — 純前端邏輯（單檔內嵌）
+   ============================================================ */
+const ASSISTANTS = [
+  { name: '霞', hex: '#ef7d78' },
+  { name: '嵐', hex: '#34b3a0' },
+  { name: '偲', hex: '#b06fd6' },
+  { name: '琳', hex: '#f0a53b' },
+  { name: '阡', hex: '#5b8def' },
+];
+const SHIFTS = [
+  { key: 'morning', label: '早班', time: '9:30–18:30' },
+  { key: 'evening', label: '晚班', time: '11:30–20:30' },
+];
+const SHIFT_HOURS = 8;      // 每班工時（9小時工時 − 1小時午休）
+const WEEKLY_TARGET = 40;   // 每人每週目標工時
+
+// 醫師固定班表（0=週日 ... 6=週六）
+const DOCTORS = {
+  chen: { label: '陳醫師', className: 'doc-chen',
+    days: { 1: ['morning'], 3: ['morning', 'evening'], 5: ['morning', 'evening'] } },
+  yu:   { label: '宇醫師', className: 'doc-yu',
+    days: { 1: ['evening'], 4: ['morning', 'evening'] } }, // 週一 14:00-20:30 歸晚班時段
+};
+const STORAGE_KEY = 'assistant-schedule-v1';
+
+let viewYear, viewMonth;
+let schedule = load();
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function dateKey(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
+function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; } }
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule)); } catch (e) {} }
+function getCell(key) { if (!schedule[key]) schedule[key] = { morning: [], evening: [] }; return schedule[key]; }
+
+function toggleAssign(key, shiftKey, name) {
+  const arr = getCell(key)[shiftKey];
+  const idx = arr.indexOf(name);
+  if (idx >= 0) arr.splice(idx, 1); else arr.push(name);
+  save(); render();
+}
+
+function renderLegend() {
+  const box = document.getElementById('assistantLegend');
+  box.innerHTML = '';
+  ASSISTANTS.forEach(function (a) {
+    const chip = document.createElement('span'); chip.className = 'legend-chip';
+    const avatar = document.createElement('span'); avatar.className = 'legend-avatar';
+    avatar.style.background = a.hex; avatar.textContent = a.name;
+    const label = document.createElement('span'); label.textContent = a.name;
+    chip.append(avatar, label); box.appendChild(chip);
+  });
+}
+
+function render() {
+  document.getElementById('monthLabel').textContent = viewYear + ' 年 ' + (viewMonth + 1) + ' 月';
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+  const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+  const total = daysInMonth(viewYear, viewMonth);
+  const today = new Date();
+  const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+  for (let i = 0; i < firstWeekday; i++) {
+    const empty = document.createElement('div'); empty.className = 'day empty'; cal.appendChild(empty);
+  }
+
+  for (let d = 1; d <= total; d++) {
+    const key = dateKey(viewYear, viewMonth, d);
+    const wd = new Date(viewYear, viewMonth, d).getDay();
+    const cell = document.createElement('div'); cell.className = 'day';
+    if (wd === 0 || wd === 6) cell.classList.add('weekend');
+    if (today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === d)
+      cell.classList.add('today');
+
+    const head = document.createElement('div'); head.className = 'day-head';
+    const num = document.createElement('span'); num.className = 'day-num';
+    num.textContent = d; num.dataset.weekday = '（' + weekdayNames[wd] + '）';
+    head.appendChild(num);
+
+    const badges = document.createElement('div'); badges.className = 'doc-badges';
+    Object.values(DOCTORS).forEach(function (doc) {
+      if (doc.days[wd]) {
+        const b = document.createElement('span'); b.className = 'doc-badge ' + doc.className;
+        b.textContent = doc.label;
+        b.title = doc.label + '：' + doc.days[wd].map(function (s) { return SHIFTS.find(function (x) { return x.key === s; }).label; }).join('、');
+        badges.appendChild(b);
+      }
+    });
+    head.appendChild(badges); cell.appendChild(head);
+
+    const data = schedule[key] || { morning: [], evening: [] };
+    SHIFTS.forEach(function (shift) {
+      const block = document.createElement('div'); block.className = 'shift-block ' + shift.key;
+      const title = document.createElement('div'); title.className = 'shift-title';
+      title.innerHTML = '<span class="dot dot-' + shift.key + '"></span>' + shift.label + ' <span class="t-time">' + shift.time + '</span>';
+      block.appendChild(title);
+      const row = document.createElement('div'); row.className = 'chip-row';
+      ASSISTANTS.forEach(function (a) {
+        const chip = document.createElement('div'); chip.className = 'chip'; chip.textContent = a.name;
+        if ((data[shift.key] || []).includes(a.name)) { chip.classList.add('on'); chip.style.background = a.hex; }
+        chip.title = a.name + ' · ' + shift.label;
+        chip.addEventListener('click', function () { toggleAssign(key, shift.key, a.name); });
+        row.appendChild(chip);
+      });
+      block.appendChild(row); cell.appendChild(block);
+    });
+    cal.appendChild(cell);
+  }
+  renderWeeklySummary();
+}
+
+// 以「週一為一週開始」分組，僅計入目前檢視月份的日期
+function renderWeeklySummary() {
+  const box = document.getElementById('weeklySummary'); box.innerHTML = '';
+  const total = daysInMonth(viewYear, viewMonth);
+  const weeks = new Map();
+
+  for (let d = 1; d <= total; d++) {
+    const date = new Date(viewYear, viewMonth, d);
+    const wd = date.getDay();
+    const monday = new Date(date); monday.setDate(date.getDate() - (wd === 0 ? 6 : wd - 1));
+    const wkKey = dateKey(monday.getFullYear(), monday.getMonth(), monday.getDate());
+    if (!weeks.has(wkKey)) weeks.set(wkKey, {});
+    const bucket = weeks.get(wkKey);
+    const cell = schedule[dateKey(viewYear, viewMonth, d)];
+    if (!cell) continue;
+    SHIFTS.forEach(function (shift) {
+      (cell[shift.key] || []).forEach(function (name) { bucket[name] = (bucket[name] || 0) + SHIFT_HOURS; });
+    });
+  }
+
+  Array.from(weeks.keys()).sort().forEach(function (wkKey, i) {
+    const monday = new Date(wkKey);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const bucket = weeks.get(wkKey);
+    const card = document.createElement('div'); card.className = 'week-card';
+    const title = document.createElement('h4');
+    title.textContent = '第 ' + (i + 1) + ' 週（' + (monday.getMonth() + 1) + '/' + monday.getDate() + ' – ' + (sunday.getMonth() + 1) + '/' + sunday.getDate() + '）';
+    card.appendChild(title);
+    const grid = document.createElement('div'); grid.className = 'hours-grid';
+    ASSISTANTS.forEach(function (a) {
+      const hrs = bucket[a.name] || 0;
+      const state = hrs === WEEKLY_TARGET ? 'ok' : hrs > WEEKLY_TARGET ? 'over' : 'under';
+      const item = document.createElement('div'); item.className = 'hours-item';
+      const top = document.createElement('div'); top.className = 'hours-top';
+      const avatar = document.createElement('span'); avatar.className = 'hours-avatar'; avatar.style.background = a.hex; avatar.textContent = a.name;
+      const label = document.createElement('span'); label.textContent = a.name;
+      const val = document.createElement('span'); val.className = 'hours-value ' + state;
+      val.textContent = hrs + ' / ' + WEEKLY_TARGET + ' 小時';
+      top.append(avatar, label, val);
+      const bar = document.createElement('div'); bar.className = 'bar';
+      const fill = document.createElement('div'); fill.className = 'bar-fill' + (state === 'over' ? ' over' : '');
+      fill.style.width = Math.min(100, (hrs / WEEKLY_TARGET) * 100) + '%';
+      if (state !== 'over') fill.style.background = a.hex;
+      bar.appendChild(fill);
+      item.append(top, bar); grid.appendChild(item);
+    });
+    card.appendChild(grid); box.appendChild(card);
+  });
+}
+
+function autoFill() {
+  if (!confirm('將依醫師固定班表，在「尚無人」的班別自動帶入建議助理，是否繼續？')) return;
+  const total = daysInMonth(viewYear, viewMonth);
+  for (let d = 1; d <= total; d++) {
+    const wd = new Date(viewYear, viewMonth, d).getDay();
+    const key = dateKey(viewYear, viewMonth, d);
+    const needed = new Set();
+    Object.values(DOCTORS).forEach(function (doc) { (doc.days[wd] || []).forEach(function (s) { needed.add(s); }); });
+    if (needed.size === 0) continue;
+    const cell = getCell(key);
+    let rotate = d % ASSISTANTS.length;
+    needed.forEach(function (s) {
+      if (cell[s].length === 0) { cell[s].push(ASSISTANTS[rotate % ASSISTANTS.length].name); rotate++; }
+    });
+  }
+  save(); render();
+}
+
+function clearMonth() {
+  if (!confirm('確定要清除 ' + viewYear + ' 年 ' + (viewMonth + 1) + ' 月的所有排班嗎？')) return;
+  const total = daysInMonth(viewYear, viewMonth);
+  for (let d = 1; d <= total; d++) delete schedule[dateKey(viewYear, viewMonth, d)];
+  save(); render();
+}
+
+function buildText() {
+  const total = daysInMonth(viewYear, viewMonth);
+  const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
+  let lines = [viewYear + ' 年 ' + (viewMonth + 1) + ' 月 助理班表', ''];
+  for (let d = 1; d <= total; d++) {
+    const cell = schedule[dateKey(viewYear, viewMonth, d)];
+    if (!cell || (cell.morning.length === 0 && cell.evening.length === 0)) continue;
+    const wd = weekdayNames[new Date(viewYear, viewMonth, d).getDay()];
+    const parts = [];
+    if (cell.morning.length) parts.push('早班：' + cell.morning.join('、'));
+    if (cell.evening.length) parts.push('晚班：' + cell.evening.join('、'));
+    lines.push((viewMonth + 1) + '/' + d + '（' + wd + '） ' + parts.join('　'));
+  }
+  if (lines.length === 2) lines.push('（本月尚未排班）');
+  return lines.join('\n');
+}
+
+function exportText() {
+  const blob = new Blob([buildText()], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = '班表_' + viewYear + '-' + pad(viewMonth + 1) + '.txt';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function emailSchedule() {
+  const subject = viewYear + ' 年 ' + (viewMonth + 1) + ' 月 助理班表';
+  const mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildText());
+  if (mailto.length > 1800) { alert('本月班表內容較長，請改用「匯出文字」後手動附加到 Email。'); return; }
+  window.location.href = mailto;
+}
+
+function goMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  render();
+}
+function goToday() { const now = new Date(); viewYear = now.getFullYear(); viewMonth = now.getMonth(); render(); }
+
+function init() {
+  const now = new Date();
+  viewYear = now.getFullYear(); viewMonth = now.getMonth();
+  renderLegend(); render();
+  document.getElementById('prevMonth').addEventListener('click', function () { goMonth(-1); });
+  document.getElementById('nextMonth').addEventListener('click', function () { goMonth(1); });
+  document.getElementById('todayBtn').addEventListener('click', goToday);
+  document.getElementById('autoFillBtn').addEventListener('click', autoFill);
+  document.getElementById('clearBtn').addEventListener('click', clearMonth);
+  document.getElementById('exportBtn').addEventListener('click', exportText);
+  document.getElementById('emailBtn').addEventListener('click', emailSchedule);
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
