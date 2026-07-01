@@ -140,6 +140,7 @@ button:active { transform: scale(0.96); }
 .doc-tag { color: #fff; font-size: 12px; padding: 3px 9px; border-radius: 7px; font-weight: 700; }
 .doc-chen { background: linear-gradient(120deg, #e2669a, #d07aa0); }
 .doc-yu   { background: linear-gradient(120deg, #5b8def, #6a8fbf); }
+.doc-lu   { background: linear-gradient(120deg, #33a98a, #57bd9c); }
 
 .assistant-legend { display: flex; flex-wrap: wrap; gap: 10px; }
 .legend-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
@@ -272,6 +273,7 @@ button:active { transform: scale(0.96); }
         <ul class="doctor-legend">
           <li><span class="doc-tag doc-chen">陳醫師</span> 週一早班、週三/週五整天</li>
           <li><span class="doc-tag doc-yu">宇醫師</span> 週一 14:00–20:30、週四整天</li>
+          <li><span class="doc-tag doc-lu">陸醫師</span> 週二整天、週三 16:00–20:30、週六 9:30–13:30</li>
         </ul>
       </div>
     </section>
@@ -337,6 +339,8 @@ const DOCTORS = {
     days: { 1: ['morning'], 3: ['morning', 'evening'], 5: ['morning', 'evening'] } },
   yu:   { label: '宇醫師', className: 'doc-yu',
     days: { 1: ['evening'], 4: ['morning', 'evening'] } }, // 週一 14:00-20:30 歸晚班時段
+  lu:   { label: '陸醫師', className: 'doc-lu',
+    days: { 2: ['morning', 'evening'], 3: ['evening'], 6: ['morning'] } }, // 週二整天、週三 16:00-20:30、週六 9:30-13:30
 };
 const STORAGE_KEY = 'assistant-schedule-v1';
 
