@@ -158,12 +158,11 @@ button:active { transform: scale(0.96); }
 .toolbar-left, .toolbar-right { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* ===== 月曆 ===== */
-.weekday-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 10px; }
+.weekday-head { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 10px; }
 .wd { text-align: center; font-weight: 700; font-size: 13px; color: var(--text-soft); padding: 4px 0; }
-.wd-sun { color: var(--pink-700); }
 .wd-sat { color: var(--a-qian); }
 
-.calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.calendar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
 .day {
   background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-sm);
   min-height: 132px; padding: 9px; box-shadow: var(--shadow-sm);
@@ -224,6 +223,9 @@ button:active { transform: scale(0.96); }
 .weekly-summary { display: flex; flex-direction: column; gap: 16px; }
 .week-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow-sm); }
 .week-card h4 { margin: 0 0 14px; font-size: 15px; font-weight: 800; color: var(--text); }
+.week-card.month-total { border-color: var(--pink-300); background: linear-gradient(180deg, #fff4f8, #fff); box-shadow: var(--shadow); }
+.week-card.month-total h4 { color: var(--pink-700); }
+.grand-total { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); text-align: right; font-weight: 800; font-size: 14px; color: var(--pink-700); }
 .hours-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
 .hours-item { display: flex; flex-direction: column; gap: 6px; }
 .hours-top { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
@@ -312,7 +314,6 @@ button:active { transform: scale(0.96); }
     <!-- 月曆 -->
     <main>
       <div class="weekday-head">
-        <div class="wd wd-sun">日</div>
         <div class="wd">一</div>
         <div class="wd">二</div>
         <div class="wd">三</div>
@@ -405,20 +406,23 @@ function render() {
   document.getElementById('monthLabel').textContent = viewYear + ' 年 ' + (viewMonth + 1) + ' 月';
   const cal = document.getElementById('calendar');
   cal.innerHTML = '';
-  const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+  const firstWd = new Date(viewYear, viewMonth, 1).getDay();
   const total = daysInMonth(viewYear, viewMonth);
   const today = new Date();
   const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
-  for (let i = 0; i < firstWeekday; i++) {
+  // 週一～週六 六欄，週日休診不顯示
+  const lead = firstWd === 0 ? 0 : firstWd - 1;
+  for (let i = 0; i < lead; i++) {
     const empty = document.createElement('div'); empty.className = 'day empty'; cal.appendChild(empty);
   }
 
   for (let d = 1; d <= total; d++) {
-    const key = dateKey(viewYear, viewMonth, d);
     const wd = new Date(viewYear, viewMonth, d).getDay();
+    if (wd === 0) continue; // 週日休診
+    const key = dateKey(viewYear, viewMonth, d);
     const cell = document.createElement('div'); cell.className = 'day';
-    if (wd === 0 || wd === 6) cell.classList.add('weekend');
+    if (wd === 6) cell.classList.add('weekend');
     if (today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === d)
       cell.classList.add('today');
 
@@ -490,6 +494,7 @@ function renderWeeklySummary() {
   const box = document.getElementById('weeklySummary'); box.innerHTML = '';
   const total = daysInMonth(viewYear, viewMonth);
   const weeks = new Map();
+  const monthTotals = {};
 
   for (let d = 1; d <= total; d++) {
     const date = new Date(viewYear, viewMonth, d);
@@ -508,9 +513,30 @@ function renderWeeklySummary() {
       } else {
         SHIFTS.forEach(function (shift) { if ((cell[shift.key] || []).includes(a.name)) h += shift.hours; });
       }
-      if (h) bucket[a.name] = (bucket[a.name] || 0) + h;
+      if (h) { bucket[a.name] = (bucket[a.name] || 0) + h; monthTotals[a.name] = (monthTotals[a.name] || 0) + h; }
     });
   }
+
+  // 本月總時數卡片
+  const monthCard = document.createElement('div'); monthCard.className = 'week-card month-total';
+  const mh = document.createElement('h4'); mh.textContent = '本月總時數（' + (viewMonth + 1) + ' 月）';
+  monthCard.appendChild(mh);
+  const mGrid = document.createElement('div'); mGrid.className = 'hours-grid';
+  let grand = 0;
+  ASSISTANTS.forEach(function (a) {
+    const hrs = monthTotals[a.name] || 0; grand += hrs;
+    const item = document.createElement('div'); item.className = 'hours-item';
+    const top = document.createElement('div'); top.className = 'hours-top';
+    const avatar = document.createElement('span'); avatar.className = 'hours-avatar'; avatar.style.background = a.hex; avatar.textContent = a.name;
+    const label = document.createElement('span'); label.textContent = a.name + (a.partTime ? '（工讀）' : '');
+    const val = document.createElement('span'); val.className = 'hours-value'; val.textContent = hrs + ' 小時';
+    top.append(avatar, label, val); item.appendChild(top); mGrid.appendChild(item);
+  });
+  monthCard.appendChild(mGrid);
+  const grandLine = document.createElement('div'); grandLine.className = 'grand-total';
+  grandLine.textContent = '全部助理合計：' + grand + ' 小時';
+  monthCard.appendChild(grandLine);
+  box.appendChild(monthCard);
 
   Array.from(weeks.keys()).sort().forEach(function (wkKey, i) {
     const monday = new Date(wkKey);
